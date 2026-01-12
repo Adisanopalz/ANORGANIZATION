@@ -2,7 +2,7 @@
 <html lang="id" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ANORGANIZATION | Productivity Suite</title>
     
     <!-- Font: Plus Jakarta Sans -->
@@ -37,10 +37,21 @@
                         'glow': '0 0 15px rgba(190, 18, 60, 0.3)',
                     },
                     animation: {
-                        'bounce-slow': 'bounce 3s infinite',
+                        'blob': 'blob 7s infinite',
+                        'slide-up': 'slideUp 0.5s ease-out forwards',
                         'fade-in': 'fadeIn 0.3s ease-out',
                     },
                     keyframes: {
+                        blob: {
+                            '0%': { transform: 'translate(0px, 0px) scale(1)' },
+                            '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
+                            '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
+                            '100%': { transform: 'translate(0px, 0px) scale(1)' },
+                        },
+                        slideUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
                         fadeIn: {
                             '0%': { opacity: '0', transform: 'scale(0.95)' },
                             '100%': { opacity: '1', transform: 'scale(1)' },
@@ -52,13 +63,31 @@
     </script>
 
     <style>
-        body { transition: background-color 0.3s ease, color 0.3s ease; }
+        body { transition: background-color 0.3s ease, color 0.3s ease; overflow-x: hidden; touch-action: pan-y; }
         
         #app-wrapper {
             position: relative;
             width: 100%;
             height: 100vh;
             overflow: hidden;
+        }
+
+        /* Latar Belakang Animasi Blob */
+        .bg-shapes {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        .blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.4;
         }
 
         .view-section {
@@ -69,27 +98,28 @@
             height: 100%;
             overflow-y: auto;
             transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.4s ease;
-            background-color: var(--bg-color);
-            padding-bottom: 4rem;
+            background-color: transparent; /* Transparan agar blob terlihat */
+            padding-bottom: 6rem;
+            z-index: 10;
         }
 
         .slide-in { transform: translateX(0); opacity: 1; z-index: 20; }
         .slide-out-left { transform: translateX(-20%); opacity: 0; z-index: 10; pointer-events: none; }
         .slide-out-right { transform: translateX(100%); opacity: 0; z-index: 30; pointer-events: none; }
+        
         .hide-scroll::-webkit-scrollbar { display: none; }
         .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
         
         .glass-header {
-            background: rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 255, 0.8);
             backdrop-filter: blur(12px);
             border-bottom: 1px solid rgba(0,0,0,0.05);
         }
         .dark .glass-header {
-            background: rgba(15, 23, 42, 0.9);
+            background: rgba(15, 23, 42, 0.8);
             border-bottom: 1px solid rgba(255,255,255,0.05);
         }
 
-        /* Badge Styles */
         .badge {
             font-size: 0.6rem;
             padding: 0.1rem 0.4rem;
@@ -102,7 +132,6 @@
             right: 1rem;
         }
 
-        /* Kbd style for shortcuts */
         kbd {
             background-color: #f3f4f6;
             border: 1px solid #d1d5db;
@@ -118,9 +147,24 @@
             border-color: #374151;
             color: #e5e7eb;
         }
+
+        /* Filter Tab Indicator Animation */
+        .filter-indicator {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
     </style>
 </head>
-<body class="bg-brand-bg text-slate-900 dark:bg-brand-darkBg dark:text-slate-100 antialiased">
+<body class="bg-brand-bg text-slate-900 dark:bg-brand-darkBg dark:text-slate-100 antialiased selection:bg-brand-primary selection:text-white">
+
+    <!-- ANIMATED BACKGROUND (Biar ga hampa) -->
+    <div class="bg-shapes">
+        <!-- Blob 1 (Rose) -->
+        <div class="blob bg-rose-300 dark:bg-rose-900 w-96 h-96 top-0 -left-20 animate-blob"></div>
+        <!-- Blob 2 (Purple) -->
+        <div class="blob bg-purple-300 dark:bg-purple-900 w-96 h-96 bottom-0 -right-20 animate-blob animation-delay-2000"></div>
+        <!-- Blob 3 (Yellow/Gold) -->
+        <div class="blob bg-yellow-200 dark:bg-yellow-900/50 w-80 h-80 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 animate-blob animation-delay-4000"></div>
+    </div>
 
     <!-- WRAPPER UTAMA -->
     <div id="app-wrapper">
@@ -129,70 +173,78 @@
         <section id="dashboard" class="view-section slide-in px-4 pt-4">
             
             <!-- Navbar -->
-            <header class="flex justify-between items-center py-4 mb-6">
+            <header class="flex justify-between items-center py-4 mb-6 relative z-10">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-brand-primary rounded-xl text-white flex items-center justify-center font-bold text-xl shadow-glow relative overflow-hidden">
-                        A
-                        <div class="absolute top-0 right-0 w-3 h-3 bg-brand-gold rounded-full animate-ping"></div>
+                    <div class="w-10 h-10 bg-brand-primary rounded-xl text-white flex items-center justify-center font-bold text-xl shadow-glow relative overflow-hidden group cursor-pointer" onclick="alert('System v6.0 Online')">
+                        <span class="relative z-10">A</span>
+                        <div class="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity"></div>
                     </div>
                     <div>
                         <h1 class="font-bold text-xl tracking-tight leading-none">ANORGANIZATION</h1>
-                        <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Enterprise Edition <span class="text-brand-gold font-bold text-[10px] border border-brand-gold px-1 rounded ml-1">PRO</span></p>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Enterprise Edition <span class="text-brand-gold font-bold text-[10px] border border-brand-gold px-1 rounded ml-1 bg-yellow-50 dark:bg-transparent">PRO</span></p>
                     </div>
                 </div>
-                <button id="themeToggle" class="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-yellow-400 hover:scale-105 transition" title="Ganti Tema (Alt+T)">
+                <button id="themeToggle" class="w-10 h-10 rounded-full bg-white/50 dark:bg-slate-800/50 backdrop-blur flex items-center justify-center text-slate-600 dark:text-yellow-400 hover:scale-105 transition shadow-sm border border-white/20" title="Ganti Tema (Alt+T)">
                     <i class="fas fa-sun dark:hidden"></i>
                     <i class="fas fa-moon hidden dark:inline"></i>
                 </button>
             </header>
 
             <!-- Hero Text -->
-            <div class="mb-6 bg-gradient-to-r from-brand-primary to-purple-600 p-6 rounded-2xl text-white shadow-lg relative overflow-hidden group">
+            <div class="mb-6 bg-gradient-to-r from-brand-primary to-purple-600 p-6 rounded-2xl text-white shadow-lg relative overflow-hidden group mx-auto max-w-4xl z-10">
                 <div class="absolute -right-10 -top-10 w-40 h-40 bg-white opacity-10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
                 <h2 class="text-2xl font-bold mb-1">Selamat Datang, CEO.</h2>
                 <p class="text-rose-100 text-sm opacity-90">Kelola produktivitas tingkat tinggi hari ini.</p>
+                
+                <!-- Swipe Hint (Mobile) -->
+                <div class="md:hidden flex items-center gap-2 mt-4 text-[10px] text-white/70 bg-white/10 w-fit px-2 py-1 rounded-lg backdrop-blur-sm">
+                    <i class="fas fa-arrow-left"></i> Geser <span class="font-bold">Kategori</span> <i class="fas fa-arrow-right"></i>
+                </div>
             </div>
 
             <!-- Filter Tabs -->
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-4">
-                <div class="flex gap-4 overflow-x-auto pb-2 hide-scroll text-sm font-semibold text-slate-500 dark:text-slate-400" id="filterContainer">
-                    <button onclick="filterTools('all')" class="filter-btn active text-brand-primary dark:text-white border-b-2 border-brand-primary px-1 transition-colors" data-filter="all">Semua</button>
-                    <button onclick="filterTools('productivity')" class="filter-btn hover:text-slate-800 dark:hover:text-slate-200 px-1 border-b-2 border-transparent transition-colors" data-filter="productivity">Produktivitas</button>
-                    <button onclick="filterTools('utility')" class="filter-btn hover:text-slate-800 dark:hover:text-slate-200 px-1 border-b-2 border-transparent transition-colors" data-filter="utility">Utilitas</button>
-                    <button onclick="filterTools('pro')" class="filter-btn text-brand-gold hover:text-yellow-600 px-1 border-b-2 border-transparent transition-colors" data-filter="pro"><i class="fas fa-crown mr-1"></i>Premium</button>
-                </div>
-                <!-- Shortcut Hint -->
-                <div class="hidden md:block text-[10px] text-slate-400 cursor-pointer hover:text-brand-primary transition-colors" onclick="showShortcuts()">
-                    <i class="fas fa-keyboard mr-1"></i> Tekan <kbd>?</kbd> untuk shortcut
+            <div class="sticky top-0 z-40 bg-brand-bg/95 dark:bg-brand-darkBg/95 backdrop-blur-md py-2 -mx-4 px-4 border-b border-slate-200/50 dark:border-slate-800/50 mb-4 transition-colors duration-300">
+                <div class="flex gap-2 overflow-x-auto hide-scroll text-sm font-semibold max-w-4xl mx-auto" id="filterContainer">
+                    <button onclick="filterTools('all')" class="filter-btn active flex-shrink-0 px-4 py-2 rounded-full transition-all duration-300" data-filter="all">Semua</button>
+                    <button onclick="filterTools('productivity')" class="filter-btn flex-shrink-0 px-4 py-2 rounded-full transition-all duration-300" data-filter="productivity">Produktivitas</button>
+                    <button onclick="filterTools('utility')" class="filter-btn flex-shrink-0 px-4 py-2 rounded-full transition-all duration-300" data-filter="utility">Utilitas</button>
+                    <button onclick="filterTools('pro')" class="filter-btn flex-shrink-0 px-4 py-2 rounded-full transition-all duration-300 text-brand-gold" data-filter="pro"><i class="fas fa-crown mr-1"></i>Premium</button>
                 </div>
             </div>
 
             <!-- Grid Alat -->
-            <div id="toolsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-24 min-h-[300px]">
+            <div id="toolsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-24 min-h-[300px] max-w-6xl mx-auto relative z-10">
                 <!-- Kartu JS -->
             </div>
 
             <!-- Footer -->
-            <footer class="text-center py-6 text-xs text-slate-400 mt-4 pb-10">
-                &copy; 2026 ANORGANIZATION Corp. <br> System Status: <span class="text-green-500 font-bold">● Online</span>
-                <div class="md:hidden mt-2 text-[10px] opacity-70">Tap untuk Shortcut</div>
+            <footer class="text-center py-6 text-xs text-slate-400 mt-4 pb-10 relative z-10">
+                &copy; 2026 ANORGANIZATION Corp. <br>
+                <div class="hidden md:block mt-2 opacity-60"><kbd>?</kbd> untuk shortcut</div>
             </footer>
         </section>
 
         <!-- HALAMAN 2: TOOL DETAIL -->
-        <section id="toolView" class="view-section slide-out-right bg-white dark:bg-brand-darkBg">
+        <section id="toolView" class="view-section slide-out-right bg-white dark:bg-brand-darkBg z-30">
             <div class="glass-header sticky top-0 z-50 px-4 py-3 flex items-center gap-4 shadow-sm">
-                <button onclick="goHome()" class="flex items-center justify-center w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-200 hover:bg-brand-primary hover:text-white transition-all group shadow-sm" title="Kembali (Esc)">
+                <button onclick="goHome()" class="flex items-center justify-center w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-200 hover:bg-brand-primary hover:text-white transition-all group shadow-sm active:scale-90" title="Kembali (Esc)">
                     <i class="fas fa-arrow-left group-hover:-translate-x-1 transition-transform"></i>
                 </button>
                 <div class="flex-1 overflow-hidden">
                     <h2 id="toolHeaderTitle" class="font-bold text-lg truncate">Nama Alat</h2>
-                    <p class="text-xs text-slate-500 dark:text-slate-400 truncate">Mode Fokus Aktif</p>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 truncate flex items-center gap-1">
+                        <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span> Mode Fokus Aktif
+                    </p>
                 </div>
             </div>
 
-            <div class="container mx-auto px-4 py-6 max-w-4xl">
-                <div id="toolGuideBox" class="bg-blue-50 dark:bg-slate-800/50 border border-blue-100 dark:border-slate-700 rounded-xl p-4 mb-8 flex gap-4 items-start">
+            <div class="container mx-auto px-4 py-6 max-w-4xl relative z-10">
+                <!-- Mobile Hint -->
+                <div class="md:hidden text-center mb-4 text-[10px] text-slate-400 opacity-60">
+                    <i class="fas fa-chevron-left"></i> Geser layar ke kanan untuk kembali
+                </div>
+
+                <div id="toolGuideBox" class="bg-blue-50/80 dark:bg-slate-800/80 border border-blue-100 dark:border-slate-700 rounded-xl p-4 mb-8 flex gap-4 items-start backdrop-blur-sm shadow-sm">
                     <div class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex flex-shrink-0 items-center justify-center mt-1">
                         <i class="fas fa-info"></i>
                     </div>
@@ -210,11 +262,9 @@
     <!-- MODAL UPGRADE PRO -->
     <div id="proModal" class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm hidden flex-col items-center justify-center p-6 animate-fade-in">
         <div class="bg-white dark:bg-slate-900 w-full max-w-sm rounded-3xl p-8 text-center relative overflow-hidden shadow-2xl border border-yellow-500/30">
-            <!-- Close Button -->
             <button onclick="closePro()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-white"><i class="fas fa-times"></i></button>
-            
             <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-yellow-300 via-yellow-500 to-yellow-300"></div>
-            <div class="w-20 h-20 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center mx-auto mb-6 text-yellow-600 dark:text-yellow-400 text-4xl shadow-lg">
+            <div class="w-20 h-20 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center mx-auto mb-6 text-yellow-600 dark:text-yellow-400 text-4xl shadow-lg animate-bounce-slow">
                 <i class="fas fa-crown"></i>
             </div>
             <h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-2">Upgrade ke PRO</h3>
@@ -241,10 +291,7 @@
             <div class="space-y-3">
                 <div class="flex justify-between text-sm"><span class="text-slate-500 dark:text-slate-400">Kembali / Tutup</span> <kbd>Esc</kbd></div>
                 <div class="flex justify-between text-sm"><span class="text-slate-500 dark:text-slate-400">Ganti Tema</span> <kbd>Alt</kbd> + <kbd>T</kbd></div>
-                <div class="flex justify-between text-sm"><span class="text-slate-500 dark:text-slate-400">Filter: Semua</span> <kbd>Alt</kbd> + <kbd>1</kbd></div>
-                <div class="flex justify-between text-sm"><span class="text-slate-500 dark:text-slate-400">Filter: Produktivitas</span> <kbd>Alt</kbd> + <kbd>2</kbd></div>
-                <div class="flex justify-between text-sm"><span class="text-slate-500 dark:text-slate-400">Filter: Utilitas</span> <kbd>Alt</kbd> + <kbd>3</kbd></div>
-                <div class="flex justify-between text-sm"><span class="text-slate-500 dark:text-slate-400">Filter: Premium</span> <kbd>Alt</kbd> + <kbd>4</kbd></div>
+                <div class="flex justify-between text-sm"><span class="text-slate-500 dark:text-slate-400">Navigasi Tab</span> <kbd>Alt</kbd> + <kbd>1-4</kbd></div>
                 <div class="flex justify-between text-sm"><span class="text-slate-500 dark:text-slate-400">Bantuan ini</span> <kbd>Shift</kbd> + <kbd>?</kbd></div>
             </div>
         </div>
@@ -252,26 +299,16 @@
 
     <!-- JAVASCRIPT -->
     <script>
-        // --- DATA ALAT ---
-        // Cat: 'productivity', 'utility', 'pro', 'misc'
+        // --- DATA ---
         const tools = [
-            { id: 'pomodoro', cat: 'productivity', status: 'free', icon: 'fa-clock', color: 'text-rose-500', bg: 'bg-rose-50 dark:bg-rose-900/20', title: 'Pomodoro Timer', desc: 'Teknik fokus kerja 25 menit.', guide: 'Atur waktu fokus. Klik "Mulai" dan fokus bekerja. Ambil istirahat singkat.' },
+            { id: 'pomodoro', cat: 'productivity', status: 'free', icon: 'fa-clock', color: 'text-rose-500', bg: 'bg-rose-50 dark:bg-rose-900/20', title: 'Pomodoro Timer', desc: 'Teknik fokus kerja 25 menit.', guide: 'Atur waktu fokus. Klik "Mulai" dan fokus bekerja.' },
             { id: 'eisenhower', cat: 'productivity', status: 'free', icon: 'fa-list-check', color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-900/20', title: 'Matriks Eisenhower', desc: 'Prioritas tugas Penting vs Mendesak.', guide: 'Kelompokkan tugas ke 4 kuadran prioritas.' },
-            
-            // PRO TOOLS
             { id: 'cloud', cat: 'pro', status: 'pro', icon: 'fa-cloud', color: 'text-sky-500', bg: 'bg-sky-50 dark:bg-sky-900/20', title: 'Cloud Storage', desc: 'Simpan dokumen perusahaan aman.', guide: 'PRO ONLY' },
             { id: 'ai_anal', cat: 'pro', status: 'pro', icon: 'fa-brain', color: 'text-purple-500', bg: 'bg-purple-50 dark:bg-purple-900/20', title: 'AI Analytics', desc: 'Analisa produktivitas otomatis.', guide: 'PRO ONLY' },
-
             { id: 'decision', cat: 'utility', status: 'free', icon: 'fa-spinner', color: 'text-purple-500', bg: 'bg-purple-50 dark:bg-purple-900/20', title: 'Roda Keputusan', desc: 'Bantu pilih keputusan acak.', guide: 'Masukkan opsi lalu putar roda.' },
-            
-            // MAINTENANCE
             { id: 'meeting', cat: 'utility', status: 'maintenance', icon: 'fa-coins', color: 'text-yellow-500', bg: 'bg-yellow-50 dark:bg-yellow-900/20', title: 'Kalkulator Rapat', desc: 'Hitung biaya uang meeting.', guide: 'Under Maintenance' },
-            
             { id: 'voice', cat: 'utility', status: 'free', icon: 'fa-microphone', color: 'text-emerald-500', bg: 'bg-emerald-50 dark:bg-emerald-900/20', title: 'Catatan Suara', desc: 'Ubah suara jadi teks.', guide: 'Gunakan mikrofon untuk mengetik otomatis.' },
-            
-            // COMING SOON
             { id: 'team', cat: 'productivity', status: 'soon', icon: 'fa-users', color: 'text-indigo-400', bg: 'bg-gray-100 dark:bg-gray-800', title: 'Team Collab', desc: 'Kerja bareng real-time.', guide: 'Coming Soon' },
-
             { id: 'habit', cat: 'productivity', status: 'free', icon: 'fa-calendar-check', color: 'text-teal-500', bg: 'bg-teal-50 dark:bg-teal-900/20', title: 'Pelacak Kebiasaan', desc: 'Bangun streak harian.', guide: 'Centang kebiasaan setiap hari.' },
             { id: 'timezone', cat: 'utility', status: 'free', icon: 'fa-globe', color: 'text-indigo-500', bg: 'bg-indigo-50 dark:bg-indigo-900/20', title: 'Visual Timezone', desc: 'Cek beda waktu visual.', guide: 'Geser slider untuk simulasi waktu.' },
             { id: 'sound', cat: 'productivity', status: 'free', icon: 'fa-music', color: 'text-pink-500', bg: 'bg-pink-50 dark:bg-pink-900/20', title: 'Suara Fokus', desc: 'Hujan & White Noise.', guide: 'Putar suara latar untuk fokus.' },
@@ -290,9 +327,14 @@
         const proModal = document.getElementById('proModal');
         const shortcutModal = document.getElementById('shortcutModal');
 
-        // --- FILTER & RENDER ---
+        // --- STATE ---
+        let currentFilter = 'all';
+        const categories = ['all', 'productivity', 'utility', 'pro'];
+
+        // --- RENDER ---
         function renderTools(filter = 'all') {
             toolsGrid.innerHTML = '';
+            currentFilter = filter;
             
             const filteredTools = tools.filter(tool => {
                 if (filter === 'all') return true;
@@ -301,10 +343,10 @@
             });
 
             if (filteredTools.length === 0) {
-                toolsGrid.innerHTML = `<div class="col-span-full text-center py-10 text-slate-400">Tidak ada alat di kategori ini.</div>`;
+                toolsGrid.innerHTML = `<div class="col-span-full text-center py-10 text-slate-400 italic">Tidak ada alat di kategori ini.</div>`;
             }
 
-            filteredTools.forEach(tool => {
+            filteredTools.forEach((tool, index) => {
                 const card = document.createElement('div');
                 let badgeHTML = '';
                 let opacityClass = '';
@@ -318,15 +360,15 @@
                 } else if (tool.status === 'maintenance') {
                     badgeHTML = `<div class="badge bg-orange-100 text-orange-700 border border-orange-200 dark:bg-orange-900 dark:text-orange-400"><i class="fas fa-tools mr-1"></i>FIXING</div>`;
                     opacityClass = 'opacity-70 grayscale-[0.5]';
-                    clickAction = () => alert("🛠️ Fitur ini sedang dalam perbaikan (Maintenance).");
+                    clickAction = () => alert("🛠️ Maintenance");
                 } else if (tool.status === 'soon') {
                     badgeHTML = `<div class="badge bg-gray-200 text-gray-600 border border-gray-300 dark:bg-gray-700 dark:text-gray-300">SOON</div>`;
                     opacityClass = 'opacity-60 grayscale';
-                    iconColor = 'text-gray-400';
-                    clickAction = () => alert("🚀 Fitur ini akan segera hadir!");
+                    clickAction = () => alert("🚀 Coming Soon!");
                 }
 
-                card.className = `relative bg-brand-card dark:bg-brand-darkCard p-5 rounded-2xl shadow-soft hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer border border-slate-100 dark:border-slate-800 flex items-center gap-4 group animate-fade-in ${opacityClass}`;
+                card.className = `relative bg-white/80 dark:bg-brand-darkCard/80 backdrop-blur-sm p-5 rounded-2xl shadow-soft hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer border border-white/50 dark:border-slate-700 flex items-center gap-4 group opacity-0 animate-slide-up ${opacityClass}`;
+                card.style.animationDelay = `${index * 50}ms`; // Staggered Animation
                 card.onclick = clickAction;
                 
                 card.innerHTML = `
@@ -351,9 +393,10 @@
             // Update Tab Style
             document.querySelectorAll('.filter-btn').forEach(btn => {
                 if(btn.dataset.filter === filter) {
-                    btn.className = "filter-btn active text-brand-primary dark:text-white border-b-2 border-brand-primary px-1 transition-colors";
+                    btn.className = "filter-btn active flex-shrink-0 px-5 py-2 rounded-full font-bold bg-brand-primary text-white shadow-lg shadow-rose-500/30 transition-all duration-300 transform scale-105";
                 } else {
-                    btn.className = "filter-btn hover:text-slate-800 dark:hover:text-slate-200 px-1 border-b-2 border-transparent transition-colors";
+                    btn.className = "filter-btn flex-shrink-0 px-5 py-2 rounded-full font-medium bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all duration-300";
+                    if(btn.dataset.filter === 'pro') btn.className += " text-brand-gold";
                 }
             });
         }
@@ -362,22 +405,69 @@
             renderTools(filter);
         }
 
+        // --- TOUCH GESTURES (SWIPE LOGIC) ---
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let touchEndX = 0;
+        let touchEndY = 0;
+        const appWrapper = document.getElementById('app-wrapper');
+
+        appWrapper.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+            touchStartY = e.changedTouches[0].screenY;
+        }, {passive: false}); // passive false allows preventDefault if needed
+
+        appWrapper.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            touchEndY = e.changedTouches[0].screenY;
+            handleSwipe();
+        }, {passive: false});
+
+        function handleSwipe() {
+            const diffX = touchEndX - touchStartX;
+            const diffY = touchEndY - touchStartY;
+            const threshold = 50; // min swipe distance
+
+            // Ensure horizontal swipe is dominant
+            if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > threshold) {
+                if (diffX > 0) {
+                    // SWIPE RIGHT (->)
+                    if (toolView.classList.contains('slide-in')) {
+                        goHome(); // Back to dashboard
+                    } else {
+                        // In Dashboard: Cycle Filter Prev
+                        changeFilter(-1);
+                    }
+                } else {
+                    // SWIPE LEFT (<-)
+                    if (!toolView.classList.contains('slide-in')) {
+                        // In Dashboard: Cycle Filter Next
+                        changeFilter(1);
+                    }
+                }
+            }
+        }
+
+        function changeFilter(direction) {
+            let idx = categories.indexOf(currentFilter);
+            idx += direction;
+            if (idx < 0) idx = categories.length - 1;
+            if (idx >= categories.length) idx = 0;
+            filterTools(categories[idx]);
+        }
+
+
         // --- SHORTCUTS ---
         document.addEventListener('keydown', (e) => {
-            // Esc to Go Home / Close Modals
             if(e.key === 'Escape') {
                 if(!proModal.classList.contains('hidden')) closePro();
                 else if(!shortcutModal.classList.contains('hidden')) closeShortcuts();
                 else goHome();
             }
-
-            // Show Shortcuts Help
             if(e.key === '?' && e.shiftKey) showShortcuts();
-
-            // Alt Shortcuts
             if(e.altKey) {
                 switch(e.key) {
-                    case 't': // Theme
+                    case 't': 
                         document.documentElement.classList.toggle('dark');
                         localStorage.theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
                         break;
@@ -396,10 +486,8 @@
         function openTool(id) {
             const tool = tools.find(t => t.id === id);
             if (!tool) return;
-
             toolHeaderTitle.innerText = tool.title;
             toolGuideText.innerText = tool.guide;
-
             stopProcesses();
             toolContainer.innerHTML = '';
             if (renderers[id]) renderers[id](toolContainer);
@@ -432,7 +520,7 @@
             localStorage.theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
         });
 
-        // --- UTILS ---
+        // --- UTILS & RENDERERS ---
         let intervalRef = null;
         let audioCtxRef = null;
         function stopProcesses() {
@@ -442,7 +530,6 @@
             audioCtxRef = null;
         }
 
-        // --- RENDERERS ---
         const renderers = {
             pomodoro: (el) => {
                 el.innerHTML = `
@@ -462,9 +549,7 @@
                 let t = 25 * 60, run = false;
                 const disp = document.getElementById('pTime'), btn = document.getElementById('pStart');
                 const upd = () => disp.innerText = `${Math.floor(t/60).toString().padStart(2,'0')}:${(t%60).toString().padStart(2,'0')}`;
-                
                 window.setP = (m) => { stopProcesses(); run=false; t=m*60; upd(); btn.innerText="Mulai Fokus"; btn.classList.remove('bg-yellow-500'); btn.classList.add('bg-brand-primary'); };
-                
                 btn.onclick = () => {
                     if(run) { clearInterval(intervalRef); btn.innerText="Lanjut"; btn.classList.replace('bg-yellow-500','bg-brand-primary'); }
                     else {
@@ -485,95 +570,30 @@
                         ${mq('q4','bg-slate-100 border-slate-200','text-slate-600','HAPUS (TDK PENTING)')}
                     </div>
                 `;
-                function mq(id,bg,txt,tt) {
-                    return `<div class="${bg} border rounded-xl p-4 flex flex-col min-h-[250px] dark:bg-slate-800 dark:border-slate-700">
-                        <h4 class="${txt} font-bold text-xs mb-3 dark:text-slate-300">${tt}</h4>
-                        <div class="flex gap-2 mb-2"><input id="i-${id}" class="flex-1 text-sm p-2 rounded border dark:bg-slate-900 dark:border-slate-600 dark:text-white" placeholder="Tugas.."><button onclick="adE('${id}')" class="bg-white dark:bg-slate-700 px-3 rounded shadow-sm">+</button></div>
-                        <ul id="l-${id}" class="space-y-2 flex-1 overflow-y-auto"></ul>
-                    </div>`;
-                }
-                window.rE = () => ['q1','q2','q3','q4'].forEach(q => document.getElementById(`l-${q}`).innerHTML = d[q].map((x,i) => `
-                    <li class="bg-white dark:bg-slate-900 p-2 rounded shadow-sm text-sm flex justify-between group border border-transparent hover:border-slate-300 dark:text-slate-200">${x} <button onclick="rmE('${q}',${i})" class="text-red-300 hover:text-red-500">&times;</button></li>
-                `).join(''));
+                function mq(id,bg,txt,tt) { return `<div class="${bg} border rounded-xl p-4 flex flex-col min-h-[250px] dark:bg-slate-800 dark:border-slate-700"><h4 class="${txt} font-bold text-xs mb-3 dark:text-slate-300">${tt}</h4><div class="flex gap-2 mb-2"><input id="i-${id}" class="flex-1 text-sm p-2 rounded border dark:bg-slate-900 dark:border-slate-600 dark:text-white" placeholder="Tugas.."><button onclick="adE('${id}')" class="bg-white dark:bg-slate-700 px-3 rounded shadow-sm">+</button></div><ul id="l-${id}" class="space-y-2 flex-1 overflow-y-auto"></ul></div>`; }
+                window.rE = () => ['q1','q2','q3','q4'].forEach(q => document.getElementById(`l-${q}`).innerHTML = d[q].map((x,i) => `<li class="bg-white dark:bg-slate-900 p-2 rounded shadow-sm text-sm flex justify-between group border border-transparent hover:border-slate-300 dark:text-slate-200">${x} <button onclick="rmE('${q}',${i})" class="text-red-300 hover:text-red-500">&times;</button></li>`).join(''));
                 window.adE = (q) => { const v=document.getElementById(`i-${q}`).value; if(v){d[q].push(v); localStorage.setItem('az_eis',JSON.stringify(d)); rE(); document.getElementById(`i-${q}`).value='';} };
                 window.rmE = (q,i) => { d[q].splice(i,1); localStorage.setItem('az_eis',JSON.stringify(d)); rE(); };
                 rE();
             },
             decision: (el) => {
-                el.innerHTML = `
-                    <div class="flex flex-col items-center">
-                        <div class="flex w-full gap-2 mb-4"><input id="wI" class="flex-1 p-3 border rounded-xl dark:bg-slate-800 dark:border-slate-600 dark:text-white" placeholder="Opsi (cth: Mie Ayam)"><button onclick="adO()" class="bg-brand-primary text-white px-5 rounded-xl font-bold">+</button></div>
-                        <div id="wT" class="flex flex-wrap gap-2 justify-center mb-6"></div>
-                        <canvas id="wC" width="300" height="300" class="rounded-full shadow-lg mb-6"></canvas>
-                        <button id="wS" class="bg-brand-primary text-white px-10 py-3 rounded-full font-bold shadow-glow hover:scale-105 transition">PUTAR RODA</button>
-                        <div id="wR" class="mt-4 text-xl font-bold h-8 text-brand-primary"></div>
-                    </div>
-                `;
-                let ops = ["Ya", "Tidak"];
-                const ctx = document.getElementById('wC').getContext('2d');
-                let ang=0;
-                const drw = () => {
-                    const arc = Math.PI*2/ops.length;
-                    ctx.clearRect(0,0,300,300);
-                    ops.forEach((o,i)=>{
-                        const a = ang+i*arc;
-                        ctx.beginPath(); ctx.fillStyle = i%2===0?'#be123c':'#e11d48';
-                        ctx.arc(150,150,145,a,a+arc); ctx.lineTo(150,150); ctx.fill();
-                        ctx.save(); ctx.translate(150+Math.cos(a+arc/2)*100, 150+Math.sin(a+arc/2)*100);
-                        ctx.rotate(a+arc/2+Math.PI); ctx.fillStyle="#fff"; ctx.fillText(o, -ctx.measureText(o).width/2, 0); ctx.restore();
-                    });
-                    ctx.beginPath(); ctx.fillStyle="black"; ctx.moveTo(290,150); ctx.lineTo(300,140); ctx.lineTo(300,160); ctx.fill();
-                };
+                el.innerHTML = `<div class="flex flex-col items-center"><div class="flex w-full gap-2 mb-4"><input id="wI" class="flex-1 p-3 border rounded-xl dark:bg-slate-800 dark:border-slate-600 dark:text-white" placeholder="Opsi (cth: Mie Ayam)"><button onclick="adO()" class="bg-brand-primary text-white px-5 rounded-xl font-bold">+</button></div><div id="wT" class="flex flex-wrap gap-2 justify-center mb-6"></div><canvas id="wC" width="300" height="300" class="rounded-full shadow-lg mb-6"></canvas><button id="wS" class="bg-brand-primary text-white px-10 py-3 rounded-full font-bold shadow-glow hover:scale-105 transition">PUTAR RODA</button><div id="wR" class="mt-4 text-xl font-bold h-8 text-brand-primary"></div></div>`;
+                let ops = ["Ya", "Tidak"]; const ctx = document.getElementById('wC').getContext('2d'); let ang=0;
+                const drw = () => { const arc = Math.PI*2/ops.length; ctx.clearRect(0,0,300,300); ops.forEach((o,i)=>{ const a = ang+i*arc; ctx.beginPath(); ctx.fillStyle = i%2===0?'#be123c':'#e11d48'; ctx.arc(150,150,145,a,a+arc); ctx.lineTo(150,150); ctx.fill(); ctx.save(); ctx.translate(150+Math.cos(a+arc/2)*100, 150+Math.sin(a+arc/2)*100); ctx.rotate(a+arc/2+Math.PI); ctx.fillStyle="#fff"; ctx.fillText(o, -ctx.measureText(o).width/2, 0); ctx.restore(); }); ctx.beginPath(); ctx.fillStyle="black"; ctx.moveTo(290,150); ctx.lineTo(300,140); ctx.lineTo(300,160); ctx.fill(); };
                 window.adO = () => { const v=document.getElementById('wI').value; if(v){ops.push(v); document.getElementById('wI').value=''; ren();} };
                 window.rmO = (i) => { ops.splice(i,1); ren(); };
                 const ren = () => { document.getElementById('wT').innerHTML=ops.map((o,i)=>`<span class="bg-slate-200 px-2 rounded text-xs flex gap-1 items-center">${o}<button onclick="rmO(${i})" class="text-red-500 font-bold">x</button></span>`).join(''); drw(); };
-                document.getElementById('wS').onclick = () => {
-                    let spd = 0.5, dec = 0.005;
-                    document.getElementById('wR').innerText="";
-                    const loop = setInterval(() => {
-                        ang+=spd; drw(); spd-=dec;
-                        if(spd<=0) { clearInterval(loop); document.getElementById('wR').innerText = ops[Math.floor(Math.random()*ops.length)]; }
-                    },16);
-                };
+                document.getElementById('wS').onclick = () => { let spd=0.5, dec=0.005; document.getElementById('wR').innerText=""; const loop=setInterval(()=>{ ang+=spd; drw(); spd-=dec; if(spd<=0){clearInterval(loop); document.getElementById('wR').innerText=ops[Math.floor(Math.random()*ops.length)];} },16); };
                 ren();
             },
             voice: (el) => {
-                el.innerHTML = `
-                    <div class="flex flex-col h-full">
-                        <div id="vA" class="flex-1 bg-white dark:bg-slate-800 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl p-4 text-lg mb-6 overflow-y-auto min-h-[200px] dark:text-white" contenteditable="true"></div>
-                        <div class="flex justify-center gap-4">
-                            <button id="vM" class="w-16 h-16 rounded-full bg-slate-800 text-white text-2xl hover:scale-110 transition shadow-xl"><i class="fas fa-microphone"></i></button>
-                            <button onclick="navClip(document.getElementById('vA').innerText)" class="w-16 h-16 rounded-full bg-slate-200 text-slate-700 text-xl hover:bg-slate-300 transition"><i class="fas fa-copy"></i></button>
-                        </div>
-                        <p id="vS" class="text-center text-sm text-slate-400 mt-2">Idle</p>
-                    </div>
-                `;
-                if('webkitSpeechRecognition' in window) {
-                    const rc = new webkitSpeechRecognition(); rc.continuous=true; rc.interimResults=true; rc.lang='id-ID';
-                    const va=document.getElementById('vA'), vm=document.getElementById('vM'), vs=document.getElementById('vS');
-                    let l=false;
-                    rc.onstart=()=>{ vs.innerText="Mendengarkan..."; vm.classList.add('bg-red-600','animate-pulse'); };
-                    rc.onend=()=>{ vs.innerText="Berhenti"; vm.classList.remove('bg-red-600','animate-pulse'); l=false; };
-                    rc.onresult=(e)=>{ let f=''; for(let i=e.resultIndex;i<e.results.length;++i) if(e.results[i].isFinal) f+=e.results[i][0].transcript; va.innerText+=f+" "; };
-                    vm.onclick=()=>{ if(l)rc.stop(); else rc.start(); l=!l; };
-                } else el.innerHTML="<p class='text-center text-red-500'>Browser tidak support.</p>";
+                el.innerHTML = `<div class="flex flex-col h-full"><div id="vA" class="flex-1 bg-white dark:bg-slate-800 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl p-4 text-lg mb-6 overflow-y-auto min-h-[200px] dark:text-white" contenteditable="true"></div><div class="flex justify-center gap-4"><button id="vM" class="w-16 h-16 rounded-full bg-slate-800 text-white text-2xl hover:scale-110 transition shadow-xl"><i class="fas fa-microphone"></i></button><button onclick="navClip(document.getElementById('vA').innerText)" class="w-16 h-16 rounded-full bg-slate-200 text-slate-700 text-xl hover:bg-slate-300 transition"><i class="fas fa-copy"></i></button></div><p id="vS" class="text-center text-sm text-slate-400 mt-2">Idle</p></div>`;
+                if('webkitSpeechRecognition' in window) { const rc = new webkitSpeechRecognition(); rc.continuous=true; rc.interimResults=true; rc.lang='id-ID'; const va=document.getElementById('vA'), vm=document.getElementById('vM'), vs=document.getElementById('vS'); let l=false; rc.onstart=()=>{ vs.innerText="Mendengarkan..."; vm.classList.add('bg-red-600','animate-pulse'); }; rc.onend=()=>{ vs.innerText="Berhenti"; vm.classList.remove('bg-red-600','animate-pulse'); l=false; }; rc.onresult=(e)=>{ let f=''; for(let i=e.resultIndex;i<e.results.length;++i) if(e.results[i].isFinal) f+=e.results[i][0].transcript; va.innerText+=f+" "; }; vm.onclick=()=>{ if(l)rc.stop(); else rc.start(); l=!l; }; } else el.innerHTML="<p class='text-center text-red-500'>Browser tidak support.</p>";
             },
             habit: (el) => {
                 let h = JSON.parse(localStorage.getItem('az_hb'))||[];
-                el.innerHTML = `
-                    <div class="flex gap-2 mb-6"><input id="hI" class="flex-1 p-3 border rounded-xl dark:bg-slate-800 dark:border-slate-600 dark:text-white" placeholder="Kebiasaan Baru"><button onclick="adH()" class="bg-brand-primary text-white px-5 rounded-xl font-bold">Tambah</button></div>
-                    <div id="hL" class="space-y-3"></div>
-                `;
-                window.rHb = () => {
-                    const td = new Date().toDateString();
-                    document.getElementById('hL').innerHTML = h.map((x,i) => {
-                        const ok = x.l === td;
-                        return `<div class="flex justify-between items-center p-4 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700">
-                            <div><div class="font-bold dark:text-white ${ok?'line-through opacity-50':''}">${x.n}</div><div class="text-xs text-brand-primary font-bold">🔥 ${x.s} Hari</div></div>
-                            <div class="flex gap-2"><button onclick="tgH(${i})" class="w-10 h-10 rounded-full flex items-center justify-center ${ok?'bg-green-500 text-white':'bg-slate-100 text-slate-400'}"><i class="fas fa-check"></i></button><button onclick="dlH(${i})" class="w-10 h-10 flex items-center justify-center text-slate-300 hover:text-red-500"><i class="fas fa-trash"></i></button></div>
-                        </div>`
-                    }).join('');
-                };
+                el.innerHTML = `<div class="flex gap-2 mb-6"><input id="hI" class="flex-1 p-3 border rounded-xl dark:bg-slate-800 dark:border-slate-600 dark:text-white" placeholder="Kebiasaan Baru"><button onclick="adH()" class="bg-brand-primary text-white px-5 rounded-xl font-bold">Tambah</button></div><div id="hL" class="space-y-3"></div>`;
+                window.rHb = () => { const td = new Date().toDateString(); document.getElementById('hL').innerHTML = h.map((x,i) => { const ok = x.l === td; return `<div class="flex justify-between items-center p-4 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700"><div><div class="font-bold dark:text-white ${ok?'line-through opacity-50':''}">${x.n}</div><div class="text-xs text-brand-primary font-bold">🔥 ${x.s} Hari</div></div><div class="flex gap-2"><button onclick="tgH(${i})" class="w-10 h-10 rounded-full flex items-center justify-center ${ok?'bg-green-500 text-white':'bg-slate-100 text-slate-400'}"><i class="fas fa-check"></i></button><button onclick="dlH(${i})" class="w-10 h-10 flex items-center justify-center text-slate-300 hover:text-red-500"><i class="fas fa-trash"></i></button></div></div>`}).join(''); };
                 window.adH = () => { const v=document.getElementById('hI').value; if(v){h.push({n:v,s:0,l:''}); svH(); document.getElementById('hI').value='';} };
                 window.tgH = (i) => { const td=new Date().toDateString(); if(h[i].l!==td){h[i].s++; h[i].l=td;} else {h[i].s--; h[i].l='';} svH(); };
                 window.dlH = (i) => { h.splice(i,1); svH(); };
@@ -581,55 +601,18 @@
                 rHb();
             },
             timezone: (el) => {
-                el.innerHTML=`
-                    <div class="space-y-6 pt-4">
-                        <div class="bg-slate-100 dark:bg-slate-800 p-4 rounded-xl"><input id="tzS" type="range" min="0" max="1439" class="w-full accent-brand-primary cursor-pointer"><p class="text-center text-xs mt-2 text-slate-500">Geser Waktu</p></div>
-                        <div id="tzL" class="space-y-3"></div>
-                    </div>
-                `;
-                const s=document.getElementById('tzS'), n=new Date(); s.value=n.getUTCHours()*60+n.getUTCMinutes();
-                const l=[{n:"New York",o:-5},{n:"London",o:0},{n:"Jakarta",o:7},{n:"Tokyo",o:9}];
-                const u = () => {
-                    const b=parseInt(s.value);
-                    document.getElementById('tzL').innerHTML=l.map(x=>{
-                        let m=b+x.o*60; if(m<0)m+=1440; if(m>=1440)m-=1440;
-                        const isN=m<360||m>1080;
-                        return `<div class="flex justify-between items-center p-4 rounded-xl ${isN?'bg-slate-900 text-slate-400':'bg-white text-slate-800'} border dark:border-slate-700 shadow-sm">
-                            <div class="flex gap-3 items-center"><i class="fas ${isN?'fa-moon text-blue-400':'fa-sun text-yellow-500'}"></i> <span class="font-bold">${x.n}</span></div>
-                            <div class="text-2xl font-mono">${Math.floor(m/60).toString().padStart(2,'0')}:${(m%60).toString().padStart(2,'0')}</div>
-                        </div>`
-                    }).join('');
-                };
+                el.innerHTML=`<div class="space-y-6 pt-4"><div class="bg-slate-100 dark:bg-slate-800 p-4 rounded-xl"><input id="tzS" type="range" min="0" max="1439" class="w-full accent-brand-primary cursor-pointer"><p class="text-center text-xs mt-2 text-slate-500">Geser Waktu</p></div><div id="tzL" class="space-y-3"></div></div>`;
+                const s=document.getElementById('tzS'), n=new Date(); s.value=n.getUTCHours()*60+n.getUTCMinutes(); const l=[{n:"New York",o:-5},{n:"London",o:0},{n:"Jakarta",o:7},{n:"Tokyo",o:9}];
+                const u = () => { const b=parseInt(s.value); document.getElementById('tzL').innerHTML=l.map(x=>{ let m=b+x.o*60; if(m<0)m+=1440; if(m>=1440)m-=1440; const isN=m<360||m>1080; return `<div class="flex justify-between items-center p-4 rounded-xl ${isN?'bg-slate-900 text-slate-400':'bg-white text-slate-800'} border dark:border-slate-700 shadow-sm"><div class="flex gap-3 items-center"><i class="fas ${isN?'fa-moon text-blue-400':'fa-sun text-yellow-500'}"></i> <span class="font-bold">${x.n}</span></div><div class="text-2xl font-mono">${Math.floor(m/60).toString().padStart(2,'0')}:${(m%60).toString().padStart(2,'0')}</div></div>`}).join(''); };
                 s.oninput=u; u();
             },
             sound: (el) => {
-                el.innerHTML = `
-                    <div class="grid grid-cols-2 gap-4 h-full content-center">
-                        <button onclick="plS('rain')" class="p-6 bg-slate-800 rounded-2xl text-white hover:scale-105 transition"><i class="fas fa-cloud-rain text-4xl mb-2 text-blue-400"></i><div class="font-bold">Hujan</div></button>
-                        <button onclick="plS('white')" class="p-6 bg-slate-200 dark:bg-slate-700 rounded-2xl text-slate-800 dark:text-white hover:scale-105 transition"><i class="fas fa-wind text-4xl mb-2 text-slate-400"></i><div class="font-bold">White Noise</div></button>
-                        <button id="stS" class="col-span-2 hidden py-3 bg-red-500 text-white rounded-xl font-bold mt-4">Matikan Suara</button>
-                    </div>
-                `;
-                window.plS = (t) => {
-                    if(audioCtxRef) audioCtxRef.close();
-                    audioCtxRef = new (window.AudioContext||window.webkitAudioContext)();
-                    const bs=2*audioCtxRef.sampleRate, buf=audioCtxRef.createBuffer(1,bs,audioCtxRef.sampleRate), d=buf.getChannelData(0);
-                    for(let i=0;i<bs;i++) d[i]=Math.random()*2-1;
-                    const src=audioCtxRef.createBufferSource(); src.buffer=buf; src.loop=true;
-                    const g=audioCtxRef.createGain(); g.gain.value=0.15;
-                    if(t==='rain'){const f=audioCtxRef.createBiquadFilter(); f.type='lowpass'; f.frequency.value=400; src.connect(f); f.connect(g);} else src.connect(g);
-                    g.connect(audioCtxRef.destination); src.start();
-                    const btn=document.getElementById('stS'); btn.classList.remove('hidden'); btn.onclick=()=>{audioCtxRef.close(); btn.classList.add('hidden');};
-                };
+                el.innerHTML = `<div class="grid grid-cols-2 gap-4 h-full content-center"><button onclick="plS('rain')" class="p-6 bg-slate-800 rounded-2xl text-white hover:scale-105 transition"><i class="fas fa-cloud-rain text-4xl mb-2 text-blue-400"></i><div class="font-bold">Hujan</div></button><button onclick="plS('white')" class="p-6 bg-slate-200 dark:bg-slate-700 rounded-2xl text-slate-800 dark:text-white hover:scale-105 transition"><i class="fas fa-wind text-4xl mb-2 text-slate-400"></i><div class="font-bold">White Noise</div></button><button id="stS" class="col-span-2 hidden py-3 bg-red-500 text-white rounded-xl font-bold mt-4">Matikan Suara</button></div>`;
+                window.plS = (t) => { if(audioCtxRef) audioCtxRef.close(); audioCtxRef = new (window.AudioContext||window.webkitAudioContext)(); const bs=2*audioCtxRef.sampleRate, buf=audioCtxRef.createBuffer(1,bs,audioCtxRef.sampleRate), d=buf.getChannelData(0); for(let i=0;i<bs;i++) d[i]=Math.random()*2-1; const src=audioCtxRef.createBufferSource(); src.buffer=buf; src.loop=true; const g=audioCtxRef.createGain(); g.gain.value=0.15; if(t==='rain'){const f=audioCtxRef.createBiquadFilter(); f.type='lowpass'; f.frequency.value=400; src.connect(f); f.connect(g);} else src.connect(g); g.connect(audioCtxRef.destination); src.start(); const btn=document.getElementById('stS'); btn.classList.remove('hidden'); btn.onclick=()=>{audioCtxRef.close(); btn.classList.add('hidden');}; };
             },
             snippets: (el) => {
                 let s = JSON.parse(localStorage.getItem('az_sn'))||[];
-                el.innerHTML=`
-                    <div class="space-y-4">
-                        <div class="bg-white dark:bg-slate-800 p-4 rounded-xl border dark:border-slate-700"><input id="sT" class="w-full border-b mb-2 p-1 dark:bg-transparent dark:text-white outline-none font-bold" placeholder="Judul"><textarea id="sC" class="w-full dark:bg-transparent dark:text-slate-300 text-sm h-20 outline-none" placeholder="Isi teks..."></textarea><button onclick="adS()" class="w-full bg-brand-primary text-white py-2 rounded-lg text-sm font-bold">Simpan</button></div>
-                        <div id="sL" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
-                    </div>
-                `;
+                el.innerHTML=`<div class="space-y-4"><div class="bg-white dark:bg-slate-800 p-4 rounded-xl border dark:border-slate-700"><input id="sT" class="w-full border-b mb-2 p-1 dark:bg-transparent dark:text-white outline-none font-bold" placeholder="Judul"><textarea id="sC" class="w-full dark:bg-transparent dark:text-slate-300 text-sm h-20 outline-none" placeholder="Isi teks..."></textarea><button onclick="adS()" class="w-full bg-brand-primary text-white py-2 rounded-lg text-sm font-bold">Simpan</button></div><div id="sL" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div></div>`;
                 window.rS=()=>{ document.getElementById('sL').innerHTML=s.map((x,i)=>`<div class="bg-white dark:bg-slate-800 p-3 rounded-xl border dark:border-slate-700 relative group"><div class="font-bold text-sm dark:text-white">${x.t}</div><div class="text-xs text-slate-500 truncate my-2">${x.c}</div><button onclick="navClip('${x.c}')" class="w-full bg-slate-100 dark:bg-slate-700 text-xs font-bold py-2 rounded hover:bg-brand-primary hover:text-white">COPY</button><button onclick="rmS(${i})" class="absolute top-2 right-2 text-slate-300 hover:text-red-500">&times;</button></div>`).join(''); };
                 window.adS=()=>{ const t=document.getElementById('sT').value, c=document.getElementById('sC').value; if(t&&c){s.push({t,c}); localStorage.setItem('az_sn',JSON.stringify(s)); rS(); document.getElementById('sT').value=''; document.getElementById('sC').value='';} };
                 window.rmS=(i)=>{ s.splice(i,1); localStorage.setItem('az_sn',JSON.stringify(s)); rS(); };
@@ -640,27 +623,13 @@
                 el.innerHTML=`<div class="text-center pt-6"><input id="cD" type="date" value="${sv}" class="text-xl bg-transparent border-b dark:text-white text-center mb-8"><div class="flex gap-3 justify-center text-center text-white">${bx('dd','HARI')}${bx('hh','JAM')}${bx('mm','MNT')}${bx('ss','DTK')}</div></div>`;
                 function bx(i,l){return `<div class="bg-slate-800 p-3 rounded-xl min-w-[70px]"><div id="${i}" class="text-2xl font-bold">0</div><div class="text-[10px] text-slate-400">${l}</div></div>`;}
                 const inp=document.getElementById('cD');
-                const rn=()=>{
-                    if(!inp.value)return; localStorage.setItem('az_cd',inp.value);
-                    const t=new Date(inp.value).getTime();
-                    intervalRef=setInterval(()=>{
-                        const d=t-new Date().getTime();
-                        if(d<0){clearInterval(intervalRef);return;}
-                        document.getElementById('dd').innerText=Math.floor(d/(86400000));
-                        document.getElementById('hh').innerText=Math.floor((d%86400000)/3600000);
-                        document.getElementById('mm').innerText=Math.floor((d%3600000)/60000);
-                        document.getElementById('ss').innerText=Math.floor((d%60000)/1000);
-                    },1000);
-                };
+                const rn=()=>{ if(!inp.value)return; localStorage.setItem('az_cd',inp.value); const t=new Date(inp.value).getTime(); intervalRef=setInterval(()=>{ const d=t-new Date().getTime(); if(d<0){clearInterval(intervalRef);return;} document.getElementById('dd').innerText=Math.floor(d/(86400000)); document.getElementById('hh').innerText=Math.floor((d%86400000)/3600000); document.getElementById('mm').innerText=Math.floor((d%3600000)/60000); document.getElementById('ss').innerText=Math.floor((d%60000)/1000); },1000); };
                 inp.onchange=rn; if(sv)rn();
             }
         };
 
         window.navClip = (t) => { navigator.clipboard.writeText(t); alert("Disalin!"); }
-        
-        // Initial Render
         renderTools('all');
-
     </script>
 </body>
 </html>
